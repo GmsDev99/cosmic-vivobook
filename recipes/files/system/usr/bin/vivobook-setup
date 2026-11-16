@@ -25,16 +25,12 @@ else
 fi
 
 echo
-echo "=== 3/3 Howdy (reconhecimento facial) ==="
-v4l2-ctl --list-devices 2>/dev/null || ls /dev/video*
-read -rp "Configurar o Howdy agora? [s/N]: " ans
-if [[ "${ans,,}" == "s" ]]; then
-  echo "Vai abrir o editor: ajuste 'device_path' para a câmera IR (ex.: /dev/video2)."
-  read -rp "Enter para continuar..."
-  sudo howdy config
-  sudo howdy add
-  echo "Teste com: sudo -k && sudo echo funcionou"
-fi
+echo "=== 3/3 Reconhecimento facial (Biopass) ==="
+echo "Câmeras encontradas (a IR costuma ter 'IR' no nome):"
+v4l2-ctl --list-devices 2>/dev/null || cat /sys/class/video4linux/*/name
+echo
+echo "Abra o Biopass pelo menu de aplicativos para cadastrar o rosto"
+echo "e escolher a câmera IR. Depois teste com: sudo -k && sudo echo funcionou"
 
 echo
 echo "Pronto."
