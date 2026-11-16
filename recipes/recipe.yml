@@ -30,21 +30,39 @@ modules:
         # Biopass (reconhecimento facial com IR, alternativa ao Howdy)
         # Ao atualizar a versão, troque o número nos dois lugares do link
         - https://github.com/phucvinh57/biopass/releases/download/1.5.1/biopass-1.5.1-1.x86_64.rpm
+        - libxcrypt-compat       # libcrypt.so.1, exigida pelo biopass-helper
         - libavcodec-freeworld   # H.264/HEVC completos
         # RDP para clientes (RustConn/Remmina usam como cliente externo)
         - freerdp
         # Chaveiro para salvar senhas (libsecret): oo7, padrão do Fedora 45
         - oo7-daemon
         - pam_oo7
+        # Perfis de energia (Economia/Equilibrado/Desempenho) para o applet do COSMIC
+        - tuned
+        - tuned-ppd
         - libva-utils            # comando vainfo
         - v4l-utils              # comando v4l2-ctl (achar a câmera IR)
         - powertop
 
-  # 3. Troca o driver de vídeo "livre" do Fedora pelo completo do RPM Fusion
+  # 3. Codecs completos
   - type: script
     snippets:
+      # Driver de vídeo "livre" do Fedora → completo do RPM Fusion
       - "dnf5 -y swap libva-intel-media-driver intel-media-driver --allowerasing"
+      # H.264 da Cisco no lugar do stub vazio (noopenh264): RDP, Firefox, GStreamer
+      - "dnf5 -y swap noopenh264 openh264 --enablerepo=fedora-cisco-openh264 --allowerasing"
+      - "dnf5 -y install mozilla-openh264 gstreamer1-plugin-openh264 --enablerepo=fedora-cisco-openh264"
       - "chmod +x /usr/bin/vivobook-setup"
 
-  # 4. Assinatura da imagem (mantenha sempre por último)
+  # 4. Serviços
+  - type: systemd
+    system:
+      enabled:
+        - tuned.service
+        - tuned-ppd.service
+    user:
+      enabled:
+        - oo7-daemon.service   # chaveiro ligado para todos os usuários
+
+  # 5. Assinatura da imagem (mantenha sempre por último)
   - type: signing
