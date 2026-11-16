@@ -1,45 +1,45 @@
----
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-# image will be published to ghcr.io/<user>/<name>
 name: cosmic-vivobook
-# description will be included in the image's metadata
-description: This is my personal OS image.
+description: Fedora COSMIC Atomic ajustado para o Asus Vivobook S14 (Core Ultra 5 225H)
 
-# the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/ublue-os/silverblue-main
-image-version: latest # You can pin to a specific version of Fedora as well
+base-image: quay.io/fedora-ostree-desktops/cosmic-atomic
+image-version: 45
 
-# module configuration, executed in order
-# you can include multiple instances of the same module
 modules:
+  # 1. Arquivos do sistema (regra de limite de carga + script de setup)
   - type: files
     files:
       - source: system
-        destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
+        destination: /
 
+  # 2. Pacotes: o que você já tinha + os extras
   - type: dnf
     repos:
+      nonfree: rpmfusion
       copr:
-        - atim/starship
+        - ronnypfannschmidt/howdy-beta
     install:
       packages:
-        - micro
-        - starship
-    remove:
-      packages:
-        # example: removing firefox (in favor of the flatpak)
-        # "firefox" is the main package, "firefox-langpacks" is a dependency
-        - firefox
-        - firefox-langpacks # also remove firefox dependency (not required for all packages, this is a special case)
+        # --- já estavam na sua imagem atual ---
+        - network-manager-applet
+        - NetworkManager-openvpn
+        - NetworkManager-openvpn-gnome
+        - dnf5
+        - dnf5-plugins
+        - https://github.com/motixo/orbit/releases/latest/download/orbit-x86_64.rpm
+        # --- novos ---
+        - howdy
+        - howdy-gtk
+        - libavcodec-freeworld   # H.264/HEVC completos
+        - libva-utils            # comando vainfo
+        - v4l-utils              # comando v4l2-ctl (achar a câmera IR)
+        - powertop
 
-  - type: default-flatpaks
-    configurations:
-      - notify: true # Send notification after install/uninstall is finished (true/false)
-        scope: system
-        # If no repo information is specified, Flathub will be used by default
-        install: # system flatpaks we want all users to have and not remove
-          - org.mozilla.firefox
-          - org.gnome.Loupe
-      - scope: user # Also add Flathub user repo, but no user packages
+  # 3. Troca o driver de vídeo "livre" do Fedora pelo completo do RPM Fusion
+  - type: script
+    snippets:
+      - "dnf5 -y swap libva-intel-media-driver intel-media-driver --allowerasing"
+      - "chmod +x /usr/bin/vivobook-setup"
 
-  - type: signing # this sets up the proper policy & signing files for signed images to work fully
+  # 4. Assinatura da imagem (mantenha sempre por último)
+  - type: signing
